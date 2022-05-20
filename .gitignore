@@ -1,0 +1,10 @@
+*.log
+.DS_Store
+node_modules
+dist
+searchbox.*.json
+searchbox.*.js
+searchbox.*.txt
+privian.*.json
+privian.*.js
+privian.*.txt
