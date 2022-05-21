@@ -82,6 +82,11 @@ export class Runner {
   }
 
   async loadManifest() {
+    try {
+      await fsp.access(this.options.manifest);
+    } catch {
+      throw new Error(`Unable to read the manifest ${this.options.manifest}. Make sure the manifest exists and is readable.`);
+    }
     this.manifest = await this.readManifest(this.options.manifest);
     try {
       await this.validateManifest(this.manifest);

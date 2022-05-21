@@ -48,11 +48,10 @@ cli
 
       return runner
         .crawl()
-        .then(() => {
-          process.exit(0);
-        })
         .catch((err) => {
           Logger.log(`Error: ${err.message || err}`);
+        }).finally(() => {
+          process.exit(0);
         });
     } catch (err: any) {
       Logger.log(`Error: ${err.message || err}`);

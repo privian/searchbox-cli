@@ -50,13 +50,18 @@ npm install searchbox-cli
 
 ## Usage
 
+1. Create a new file `searchbox.manifest.json` (see specification below)
+2. Execute `searchbox`:
+
 ```shell
-searchbox-cli crawl https://example.com
+searchbox crawl https://example.com
 ```
+
+Or run `searchbox --help` for options.
 
 ## Manifest
 
-Create a new file `searchbox.manifest.json`:
+Basic manifest example (`searchbox.manifest.json`):
 
 ```json
 {
