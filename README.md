@@ -22,7 +22,6 @@
   <a href="#usage">Usage</a> •
   <a href="#manifest">Manifest</a> •
   <a href="#related">Related</a> •
-  <a href="#sponsors">Sponsors</a> •
   <a href="#license">License</a>
 </p>
 
@@ -65,20 +64,25 @@ Basic manifest example (`searchbox.manifest.json`):
 
 ```json
 {
-	"baseUrl": "https://example.com/",
-	"data": "searchbox.index.json",
-	"fields": [{
-		"name": "id",
-		"search": false
-	}, {
-		"name": "title",
-		"suggestions": true
-	}, {
-		"name": "snippet"
-	}, {
-		"name": "link",
-		"search": false
-	}]
+  "baseUrl": "https://example.com/",
+  "data": "searchbox.index.json",
+  "fields": [
+    {
+      "name": "id",
+      "search": false
+    },
+    {
+      "name": "title",
+      "suggestions": true
+    },
+    {
+      "name": "snippet"
+    },
+    {
+      "name": "link",
+      "search": false
+    }
+  ]
 }
 ```
 
@@ -88,17 +92,17 @@ Basic manifest example (`searchbox.manifest.json`):
 export interface IManifestField {
   /**
    * Boost score (integer, 0..)
-  */
+   */
   boost?: number;
 
   /**
    * Field name, see "Supported fields"
-  */
+   */
   name: string;
 
   /**
    * Whether this field is searchable
-  */
+   */
   search?: boolean;
 
   /**
@@ -115,17 +119,17 @@ export interface IManifest {
 
   /**
    * An array of fields in the index
-  */
+   */
   fields: IManifestField[];
 
   /**
    * URL or a relative path to the data file (index)
-  */
+   */
   data: string;
 
   /**
    * Manifest version (default: v1)
-  */
+   */
   version?: string;
 }
 ```
@@ -160,8 +164,10 @@ export default {
   },
   parser: {
     html: {
-      // parse only H1-H3 as items
-      headings: 'h1, h2, h3',
+      selectors: {
+        // parse only H1-H3 as items
+        headings: 'h1, h2, h3',
+      },
     },
   },
 };
@@ -174,10 +180,6 @@ See [src/types.ts](/blob/maste/src/types.ts) for more details.
 ## Related
 
 - [Searchbox](https://github.com/privian/searchbox) - UI component for website search
-
-## Sponsors
-
-This project is sponspored by [Privian.io](https://about.privian.io) - privacy-friendly, ad-free web search and analytics.
 
 ## License
 

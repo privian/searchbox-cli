@@ -20,7 +20,7 @@ export abstract class BaseAdapter<T> {
   constructor(readonly runner: Runner, readonly options: T) {
     this.fastq.error((err) => {
       if (err) {
-        console.log(err)
+        console.log(err);
         Logger.log(`Error: ${err.message || err}`);
       }
     });

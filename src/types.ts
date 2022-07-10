@@ -1,5 +1,10 @@
-import { CheerioAPI } from 'cheerio';
+import { Cheerio, CheerioAPI, AnyNode as CheerioAnyNode } from 'cheerio';
 import type { OptionsOfTextResponseBody } from 'got';
+import type { IOptions as SanitizerOptions } from 'sanitize-html';
+
+export type PartialNested<T> = {
+  [P in keyof T]?: PartialNested<T[P]>;
+};
 
 export interface IBinOptions {
   config?: string;
@@ -21,24 +26,36 @@ export interface IHttpAdapterOptions {
   request: OptionsOfTextResponseBody;
 }
 
+export interface IHTMLParserOptionsSelectors {
+  headings: string;
+  ignore: string;
+  snippets: string;
+  stops: string;
+}
+
+export interface IHTMLParserOptionsMax {
+  sections: number;
+  snippets: number;
+}
+
+export interface IHTMLParserOptionsSanitizer {
+  allowedTags: string[];
+}
+
 export interface IHTMLParserOptions {
   beforeParse:
     | ((
         $: CheerioAPI,
         html: string,
         location: string,
-        options?: IHTMLParserParseOptions
+        origin: string
       ) => Promise<boolean>)
     | null;
-  headings: string;
-  snippet: string;
-  snippetPreserve: string;
-  snippetMaxElements: number;
-  transformFunc: ((section: ISection, location: string) => ISection) | null;
-}
-
-export interface IHTMLParserParseOptions {
-  origin: string;
+  max: IHTMLParserOptionsMax;
+  root: (($: CheerioAPI) => Cheerio<CheerioAnyNode>) | null;
+  sanitizer: SanitizerOptions;
+  selectors: IHTMLParserOptionsSelectors;
+  transform: ((section: ISection, location: string) => ISection) | null;
 }
 
 export interface IMarkdownParserOptions {
@@ -53,20 +70,20 @@ export interface IConfig {
     fs: Partial<IFsAdapterOptions>;
     http: Partial<IHttpAdapterOptions>;
   };
-  
+
   /**
    * Processing concurrency (default: 1)
-  */
+   */
   concurrency: number;
 
   /**
    * Path to the manifest file
-  */
+   */
   manifest: string;
 
   /**
    * Available parsers
-  */
+   */
   parser: {
     html: Partial<IHTMLParserOptions>;
     markdown: Partial<IMarkdownParserOptions>;
@@ -74,12 +91,12 @@ export interface IConfig {
 
   /**
    * Whether to produce a `*.report.txt` file
-  */
+   */
   report: boolean;
 
   /**
    * URL or a path to crawl
-  */
+   */
   uri: string;
 }
 
@@ -112,17 +129,17 @@ export interface IParseResult {
 export interface IManifestField {
   /**
    * Boost score (integer, 0..)
-  */
+   */
   boost?: number;
 
   /**
    * Field name
-  */
+   */
   name: string;
 
   /**
    * Whether this field is searchable
-  */
+   */
   search?: boolean;
 
   /**
@@ -139,17 +156,17 @@ export interface IManifest {
 
   /**
    * An array of fields in the index
-  */
+   */
   fields: IManifestField[];
 
   /**
    * URL or a relative path to the data file (index)
-  */
+   */
   data: string;
 
   /**
    * Manifest version (default: v1)
-  */
+   */
   version?: string;
 }
 

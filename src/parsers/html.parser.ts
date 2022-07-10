@@ -1,124 +1,170 @@
 import * as cheerio from 'cheerio';
-import * as entities from 'entities';
+import sanitizeHTML from 'sanitize-html';
+import extend from 'just-extend';
 import { URL } from 'url';
 import path from 'path';
 import { Runner } from '../runner.js';
 import { BaseParser } from './base.parser.js';
 import type {
   IHTMLParserOptions,
-  IHTMLParserParseOptions,
   IParseResult,
   ISection,
+  PartialNested,
 } from '../types';
 
 export class HTMLParser extends BaseParser<IHTMLParserOptions> {
   static getOptions(
-    options: Partial<IHTMLParserOptions> = {}
+    options: PartialNested<IHTMLParserOptions> = {}
   ): IHTMLParserOptions {
-    return {
-      beforeParse: null,
-      headings: 'h1, h2, h3, h4, h5, h6',
-      snippet: 'p, ul, ol',
-      snippetPreserve: 'li',
-      snippetMaxElements: -1,
-      transformFunc: null,
-      ...options,
-    };
+    return extend(
+      true,
+      {
+        beforeParse: null,
+        max: {
+          sections: -1,
+          snippets: -1,
+        },
+        root: null,
+        sanitizer: {
+          allowedTags: [
+            'br',
+            'code',
+            'li',
+            'ol',
+            'p',
+            'pre',
+            'sub',
+            'sup',
+            'ul',
+          ],
+        },
+        selectors: {
+          headings: 'h1, h2, h3, h4, h5, h6',
+          ignore: '',
+          snippets: 'code, p, ul, ol',
+          stops: '',
+        },
+        transform: null,
+      } as IHTMLParserOptions,
+      options
+    ) as IHTMLParserOptions;
   }
 
-  constructor(runner: Runner, options: Partial<IHTMLParserOptions> = {}) {
+  constructor(runner: Runner, options: PartialNested<IHTMLParserOptions> = {}) {
     super(runner, HTMLParser.getOptions(options));
   }
 
   async parse(
     html: string,
     location: string,
-    options?: IHTMLParserParseOptions
+    origin: string
   ): Promise<IParseResult> {
     const $ = cheerio.load(html);
+    const $root = this.options.root ? this.options.root($) : $.root();
     if (this.options.beforeParse) {
-      const result = await this.options.beforeParse($, html, location, options);
+      const result = await this.options.beforeParse($, html, location, origin);
       if (result === false) {
         return {};
       }
     }
-    const headings = $(this.options.headings).toArray();
-    const links = this.getLinks($, options?.origin);
-    let sections = headings
-      .map((heading, i) => {
-        const $heading = $(heading);
+    const els = $root
+      .find(
+        [
+          this.options.selectors.headings,
+          this.options.selectors.snippets,
+          this.options.selectors.stops,
+        ]
+          .filter((sel) => !!sel)
+          .join(', ')
+      )
+      .toArray();
+    let items: Array<ISection & { chunks: string[] }> = [];
+    let skip = false;
+    for (let el of els) {
+      const $el = $(el);
+      if (
+        this.options.selectors.ignore &&
+        $el.closest(this.options.selectors.ignore).length
+      ) {
+        continue;
+      }
+      if ($el.is(this.options.selectors.headings)) {
+        $el.find('br').replaceWith(' '); // replace hard breaks with spaces
+        const title = $el.text().trim();
+        if (
+          this.options.max.sections > 0 &&
+          items.length >= this.options.max.sections
+        ) {
+          break;
+        }
         const headingLevel = Math.min(
           6,
-          parseInt(
-            (heading as cheerio.Node & { tagName: string }).tagName?.slice(1) ||
-              '0',
-            10
-          )
+          parseInt(($el as any).tagName?.slice(1) || '0', 10)
         );
-        const anchor = $heading.attr('id') || $heading.find('*[id]').attr('id');
-        const $next = headings[i + 1]
-          ? $heading
-              .nextUntil(headings[i + 1] as cheerio.Element)
-          : $heading.nextAll();
-        const snippets = this.getSnippets($, $next.toArray(), this.options.snippet);
-        return {
-          anchor,
-          boost: headingLevel > 0 ? 6 - headingLevel : null,
-          snippet: snippets
-            .slice(0, this.options.snippetMaxElements > 0 ? this.options.snippetMaxElements : snippets.length)
-            .map((el) => this.sanitize($, $(el)))
-            .join(''),
-          title: $heading.text().trim(),
-        } as ISection;
-      })
-      .filter((item) => {
-        return !!item.title && !!item.snippet;
-      });
-    if (sections && this.options.transformFunc) {
+        const anchor = $el.attr('id') || $el.find('*[id]').attr('id');
+        if (title) {
+          skip = false;
+          items.push({
+            anchor,
+            boost: headingLevel > 0 ? 6 - headingLevel : void 0,
+            chunks: [],
+            title,
+          });
+        }
+      } else if ($el.is(this.options.selectors.stops)) {
+        skip = true;
+      } else if (
+        !skip &&
+        (this.options.max.snippets < 0 ||
+          items[items.length - 1]?.chunks.length < this.options.max.snippets)
+      ) {
+        const text = $el.text().trim();
+        if (text) {
+          items[items.length - 1]?.chunks.push(this.cleanup($, $el, origin));
+        }
+      }
+    }
+    let sections: ISection[] = items.map((item) => {
+      return {
+        title: item.title,
+        snippet: item.chunks.join(''),
+      };
+    });
+    if (sections && this.options.transform) {
       sections = sections.map((section) =>
-        this.options.transformFunc!(section, location)
+        this.options.transform!(section, location)
       );
     }
     return {
-      links,
+      links: this.getLinks($, origin),
       sections,
     };
   }
 
-  sanitize(
+  cleanup(
     $: cheerio.CheerioAPI,
-    $el: cheerio.Cheerio<cheerio.Element>
+    $el: cheerio.Cheerio<cheerio.AnyNode>,
+    baseUrl: string
   ): string {
-    if (!$el.text().trim()) {
-      return '';
+    const parsedUrl = new URL(baseUrl);
+    const origin = parsedUrl.origin;
+    const baseName = path.basename(baseUrl);
+    const basePath = parsedUrl.pathname.slice(
+      1,
+      parsedUrl.pathname.length - baseName.length - 1
+    );
+    if ($el.is('h1, h2, h3, h4, h5, h6')) {
+      return this.cleanupHeadings($el);
     }
-    $el.find('*').each((_i, n) => {
-      const $n = $(n);
-      if (!$n.is(this.options.snippetPreserve)) {
-        const text = entities.encodeHTML($n.text());
-        if (text) {
-          $n.replaceWith(text);
-        } else {
-          $n.remove();
-        }
-      } else if (!$n.text().trim()) {
-        $n.remove();
-      }
+    $el.find('h1, h2, h3, h4, h5, h6').each((_i, el) => {
+      $(el).replaceWith(this.cleanupHeadings($(el)));
     });
-    $el.removeAttr(Object.keys($el.attr()).join(' '));
-    return $el.toString().trim();
+    return sanitizeHTML($el.toString(), this.options.sanitizer);
   }
 
-  getSnippets($: cheerio.CheerioAPI, els: cheerio.Element[], selector: string) {
-    return els.reduce((acc, el) => {
-      const $el = $(el);
-      if ($el.is(selector)) {
-        acc.push(el);
-      } else {
-			  acc.push(...$el.find(selector).toArray());
-      }
-      return acc;
-    }, [] as cheerio.Element[]);
+  cleanupHeadings($el: cheerio.Cheerio<cheerio.AnyNode>) {
+    const $a = $el.find('a');
+    return `<div><b>${$a.length ? $a.html() : $el.html()}</b></div>`;
   }
 
   getLinks($: cheerio.CheerioAPI, origin: string = 'http://localhost') {

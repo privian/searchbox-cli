@@ -1,7 +1,7 @@
 # Node.js docs example
 
 Crawls full Node.js documentation. See `nodejs.config.js` for crawl configuration.
- 
+
 ## Usage
 
 ```bash

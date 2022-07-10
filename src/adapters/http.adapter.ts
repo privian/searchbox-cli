@@ -79,9 +79,12 @@ export class HttpAdapter extends BaseAdapter<IHttpAdapterOptions> {
       );
     } else {
       const format = this.getFormat(url, headers['content-type']) || 'html';
-      const { links, sections } = await this.runner.parse(format, body, url, {
-        origin,
-      });
+      const { links, sections } = await this.runner.parse(
+        format,
+        body,
+        url,
+        origin
+      );
       this.success(
         sections?.map((section) => {
           return {

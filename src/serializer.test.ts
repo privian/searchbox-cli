@@ -19,7 +19,6 @@ describe('Serializer', () => {
     fields: [
       {
         name: 'id',
-        ref: true,
       },
       {
         name: 'title',
@@ -39,7 +38,12 @@ describe('Serializer', () => {
       const result = Serializer.serialize(sections, manifest);
       expect(result).toEqual(
         [...sections.values()].map((section, i) => {
-          return [i + 1, section.title, null, section.link?.replace(manifest.baseUrl!, '')];
+          return [
+            i + 1,
+            section.title,
+            null,
+            section.link?.replace(manifest.baseUrl!, ''),
+          ];
         })
       );
     });

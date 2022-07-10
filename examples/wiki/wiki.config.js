@@ -23,11 +23,14 @@ export default {
         // remove sidebars which are placed before the main content
         $('.infobox, .nomobile, .sidebar, .toc').remove();
       },
-      headings: 'h1',
-      snippet: 'p, ul, ol',
-      snippetAllowedTags: 'li, code',
-      snippetMaxElements: 2,
-      transformFunc: (section, url) => {
+      max: {
+        snippets: 2,
+      },
+      selectors: {
+        headings: 'h1',
+        snippets: 'p, ul, ol',
+      },
+      transform: (section, url) => {
         section.title = String(section.title).replace(/\[edit\]/, '');
         return section;
       },

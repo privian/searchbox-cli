@@ -14,10 +14,11 @@ export default {
   },
   parser: {
     html: {
-      snippet: 'p, ul, ol, pre',
-      snippetAllowedTags: 'li, code',
-      transformFunc: (section, url) => {
-        section.category = url.match(/(\w+)\.\w+$/)[1];
+      selectors: {
+        snippets: 'p, ul, ol, pre',
+      },
+      transform: (section, url) => {
+        section.category = url.match(/(\w+)\.\w+$/)?.[1];
         section.title = String(section.title).replace(/\#$/, '');
         return section;
       },

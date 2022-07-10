@@ -85,7 +85,9 @@ export class Runner {
     try {
       await fsp.access(this.options.manifest);
     } catch {
-      throw new Error(`Unable to read the manifest ${this.options.manifest}. Make sure the manifest exists and is readable.`);
+      throw new Error(
+        `Unable to read the manifest ${this.options.manifest}. Make sure the manifest exists and is readable.`
+      );
     }
     this.manifest = await this.readManifest(this.options.manifest);
     try {
@@ -96,17 +98,12 @@ export class Runner {
     }
   }
 
-  async parse(
-    format: string,
-    data: string,
-    location: string,
-    options?: unknown
-  ) {
+  async parse(format: string, data: string, location: string, origin: string) {
     const parser = this.parsers.get(format);
     if (!parser) {
       throw new Error(`Unsupported parser format '${format}'.`);
     }
-    return this.parsers.get(format)!.parse(data, location, options);
+    return this.parsers.get(format)!.parse(data, location, origin);
   }
 
   async readManifest(manifestPath: string): Promise<IManifest> {

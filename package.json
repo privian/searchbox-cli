@@ -1,9 +1,9 @@
 {
   "name": "searchbox-cli",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A backend-less website search built on top of lunr.js",
   "license": "MIT",
-  "author": "Privian.io; https://about.privian.io/",
+  "author": "Daniel Regeci; https://about.privian.io/",
   "bin": {
     "searchbox": "dist/bin.js"
   },
@@ -36,7 +36,7 @@
     "trailingComma": "es5"
   },
   "engines": {
-    "node": ">=14"
+    "node": ">=16"
   },
   "devDependencies": {
     "@tsconfig/recommended": "^1.0.1",
@@ -44,6 +44,8 @@
     "@types/inquirer": "^8.2.1",
     "@types/jest": "^27.4.1",
     "@types/marked": "^4.0.3",
+    "@types/prismjs": "^1.26.0",
+    "@types/sanitize-html": "^2.6.2",
     "dts-cli": "^1.5.0",
     "husky": "^7.0.4",
     "jest": "^27.5.1",
@@ -57,8 +59,7 @@
   },
   "dependencies": {
     "bytes-formatter": "^21.6.12",
-    "cheerio": "^1.0.0-rc.10",
-    "entities": "^4.3.0",
+    "cheerio": "^1.0.0-rc.12",
     "fastq": "^1.13.0",
     "glob": "^8.0.1",
     "got": "^12.1.0",
@@ -66,6 +67,7 @@
     "inquirer": "^8.2.2",
     "just-extend": "^6.0.1",
     "marked": "^4.0.14",
-    "sade": "^1.8.1"
+    "sade": "^1.8.1",
+    "sanitize-html": "^2.7.0"
   }
 }

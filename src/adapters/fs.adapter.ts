@@ -36,9 +36,7 @@ export class FsAdapter extends BaseAdapter<IFsAdapterOptions> {
       'html',
       await this.readFile(file),
       file,
-      {
-        origin: 'http://localhost',
-      }
+      'http://localhost'
     );
     this.success(sections || [], file, Date.now() - start);
     Logger.progress(this.getProgressMessage(file));

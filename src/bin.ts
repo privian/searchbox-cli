@@ -50,7 +50,8 @@ cli
         .crawl()
         .catch((err) => {
           Logger.log(`Error: ${err.message || err}`);
-        }).finally(() => {
+        })
+        .finally(() => {
           process.exit(0);
         });
     } catch (err: any) {
